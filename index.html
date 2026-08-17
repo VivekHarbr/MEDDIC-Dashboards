@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DealPulse / MEDDIC</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
+  :root {
+    --bg:#0a0c10;--surface:#111318;--surface2:#1a1d24;--border:#2a2d35;
+    --accent:#00e5a0;--accent2:#ff6b35;--accent3:#7c6dfa;
+    --text:#e8eaf0;--muted:#6b7280;--danger:#ff4757;--warn:#ffa502;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'DM Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;}
+  .app{max-width:1200px;margin:0 auto;padding:24px;}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid var(--border);}
+  .logo{font-family:'Syne',sans-serif;font-weight:800;font-size:22px;}
+  .logo span{color:var(--accent);}
+  .header-meta{font-size:11px;color:var(--muted);text-align:right;line-height:1.8;}
+  .status-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--accent);margin-right:5px;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .planhat-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(124,109,250,.1);border:1px solid rgba(124,109,250,.3);border-radius:20px;font-size:10px;color:var(--accent3);}
+  .summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;overflow:hidden;}
+  .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0;}
+  .stat-card.green::after{background:var(--accent);}
+  .stat-card.orange::after{background:var(--accent2);}
+  .stat-card.purple::after{background:var(--accent3);}
+  .stat-card.red::after{background:var(--danger);}
+  .stat-label{font-size:10px;color:var(--muted);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;}
+  .stat-value{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;}
+  .stat-value.green{color:var(--accent);}
+  .stat-value.orange{color:var(--accent2);}
+  .stat-value.purple{color:var(--accent3);}
+  .stat-value.red{color:var(--danger);}
+  .deals-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .deals-header h2{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+  .btn{padding:8px 16px;border-radius:7px;border:none;font-family:'DM Mono',monospace;font-size:12px;cursor:pointer;font-weight:500;transition:all .15s;}
+  .btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+  .btn-sm{padding:5px 10px;font-size:11px;}
+  .deal-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:border-color .2s;cursor:pointer;}
+  .deal-card:hover{border-color:#3a3d45;}
+  .deal-card.expanded{border-color:var(--accent);}
+  .deal-card-header{display:grid;grid-template-columns:28px 1fr 130px 130px 80px;align-items:center;gap:16px;padding:14px 18px;}
+  .deal-rank{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--muted);}
+  .deal-name{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;}
+  .deal-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+  .deal-stage{display:inline-block;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500;letter-spacing:.5px;}
+  .stage-prod{background:rgba(0,229,160,.15);color:var(--accent);border:1px solid rgba(0,229,160,.3);}
+  .stage-year1{background:rgba(0,229,160,.08);color:#7ecfb3;border:1px solid rgba(0,229,160,.2);}
+  .stage-poc{background:rgba(255,107,53,.15);color:var(--accent2);border:1px solid rgba(255,107,53,.3);}
+  .stage-prospect{background:rgba(124,109,250,.15);color:var(--accent3);border:1px solid rgba(124,109,250,.3);}
+  .stage-churn{background:rgba(255,71,87,.15);color:var(--danger);border:1px solid rgba(255,71,87,.3);}
+  .health-meter{text-align:right;}
+  .health-score{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;}
+  .health-bar{width:60px;height:4px;background:var(--border);border-radius:2px;margin-top:4px;margin-left:auto;overflow:hidden;}
+  .health-bar-fill{height:100%;border-radius:2px;}
+  .deal-expanded{border-top:1px solid var(--border);padding:18px;display:none;animation:slideDown .2s ease;}
+  .deal-card.expanded .deal-expanded{display:block;}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+  .meddic-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px;}
+  .meddic-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;}
+  .meddic-letter{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:4px;}
+  .meddic-name{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .meddic-score-bar{height:3px;background:var(--border);border-radius:2px;margin-bottom:6px;overflow:hidden;}
+  .meddic-score-fill{height:100%;border-radius:2px;}
+  .meddic-score-num{font-size:11px;}
+  .meddic-notes{font-size:10px;color:var(--muted);margin-top:6px;line-height:1.5;}
+  .deal-actions{display:flex;gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);flex-wrap:wrap;align-items:center;}
+  .deal-actions .lbl{font-size:10px;color:var(--muted);flex-basis:100%;margin-bottom:4px;}
+  .insight-box{background:rgba(0,229,160,.05);border:1px solid rgba(0,229,160,.15);border-radius:8px;padding:12px;font-size:11px;line-height:1.7;}
+  .insight-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:6px;display:block;}
+  .unscored-badge{display:inline-block;padding:2px 7px;background:rgba(107,114,128,.15);border:1px solid rgba(107,114,128,.3);border-radius:10px;font-size:9px;color:var(--muted);margin-left:6px;vertical-align:middle;}
+  .arr-val .lbl2{font-size:10px;color:var(--muted);display:block;margin-bottom:2px;}
+  .howto{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:24px;}
+  .howto-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--accent3);margin-bottom:10px;}
+  .howto-text{font-size:11px;color:var(--muted);line-height:1.8;}
+  .howto-text code{background:rgba(255,255,255,.06);padding:1px 6px;border-radius:4px;color:var(--accent);font-family:'DM Mono',monospace;}
+  /* priority actions */
+  .priority-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+  .priority-item{display:flex;align-items:flex-start;gap:8px;font-size:11px;line-height:1.5;}
+  .priority-num{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--accent);min-width:18px;}
+  /* tabs */
+  .tab-bar{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:0;}
+  .tab-btn{font-family:'DM Mono',monospace;font-size:10px;padding:6px 14px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;letter-spacing:.5px;text-transform:uppercase;}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+  .tab-pane{display:none;}.tab-pane.active{display:block;}
+  /* activity log */
+  .activity-week{margin-bottom:16px;}
+  .activity-week-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--accent3);margin-bottom:8px;}
+  .activity-item{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;font-size:11px;line-height:1.6;}
+  .activity-type{font-size:9px;padding:2px 7px;border-radius:10px;font-weight:600;white-space:nowrap;margin-top:2px;letter-spacing:.4px;}
+  .act-email{background:rgba(0,229,160,.12);color:var(--accent);}
+  .act-call{background:rgba(124,109,250,.15);color:var(--accent3);}
+  .act-meeting{background:rgba(255,107,53,.15);color:var(--accent2);}
+  .act-action{background:rgba(255,71,87,.12);color:var(--danger);}
+  .act-internal{background:rgba(107,114,128,.15);color:var(--muted);}
+  .activity-text{color:var(--text);flex:1;}
+  .activity-date{font-size:10px;color:var(--muted);white-space:nowrap;margin-top:2px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">deal<span>pulse</span> / meddic</div>
+    <div class="header-meta">
+      <div><span class="status-dot"></span>Claude-powered scoring</div>
+      <div class="planhat-badge" style="margin-top:4px">⬡ 16 deals · Planhat</div>
+    </div>
+  </header>
+
+  <div class="howto">
+    <div class="howto-title">⚡ To score or update a deal</div>
+    <div class="howto-text">In this chat, say <code>Score [Deal Name]</code> and paste your notes, email thread, or call transcript — or upload a doc. Claude will extract the MEDDIC scores and rebuild this dashboard automatically.</div>
+  </div>
+
+  <div class="howto" style="border-color:rgba(124,109,250,.3)">
+    <div class="howto-title" style="color:var(--accent3)">🗓️ Weekly automated dashboard (separate output)</div>
+    <div class="howto-text">A scheduled task runs every Monday at 8am London time and builds a separate, combined MEDDIC dashboard for exactly 4 accounts: Royal London, Visit Britain, B-Flexion, and Johnson &amp; Johnson (J&amp;J). It pulls each account's latest <code>deal_health_summary</code> file from Google Drive, not from the list below. This weekly dashboard includes those 4 accounts only, regardless of whether they currently show as scored or unscored in the full list on this page, and it excludes every other account here. If an account's file is missing or was not updated that week, the weekly dashboard flags it clearly instead of leaving it out.</div>
+  </div>
+
+  <div class="summary-row">
+    <div class="stat-card green"><div class="stat-label">Total Deals</div><div class="stat-value green" id="s-total"></div></div>
+    <div class="stat-card orange"><div class="stat-label">Pipeline ARR</div><div class="stat-value orange" id="s-arr"></div></div>
+    <div class="stat-card purple"><div class="stat-label">Avg Health</div><div class="stat-value purple" id="s-health"></div></div>
+    <div class="stat-card red"><div class="stat-label">Unscored / At Risk</div><div class="stat-value red" id="s-risk"></div></div>
+  </div>
+
+  <div class="deals-header">
+    <h2>Deals ranked by health</h2>
+    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
+  <div id="deal-list"></div>
+</div>
+
+<script>
+const DEALS = [
+
+  // ── STAGE 4 — COMMITMENT ─────────────────────────────────────────────────
+  {name:"Mastercard",value:530000,stage:"Prod",scored:true,health:74,
+    insight:"Live account in production. SoW review underway — Marvin, Tom, and Seb reviewing. Test deploy to begin in next few weeks. DCP team aligned and beginning to move to SoAR and CRB. Jacob is the primary relationship owner.",
+    lastUpdated:"17/08/2026",owner:"Jacob",
+    priorities:["Complete SoW review with Marvin, Tom, Seb — confirm scope and timeline","Confirm test deploy date — begin next few weeks","Monitor DCP team transition to SoAR and CRB","Jacob: maintain exec relationship cadence"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"action",date:"17 Aug",text:"SoW review in progress — Marvin, Tom, Seb reviewing. Test deploy to begin in next few weeks"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: DCP team aligned, beginning to move to SoAR and CRB. SoW sent for internal review"},
+    ]}],
+    meddic:{
+      M:{score:8,label:"Metrics",note:"Production account — success metrics established and being tracked. SoW defines expansion scope. DCP→SoAR/CRB transition is a measurable milestone."},
+      E:{score:8,label:"Economic Buyer",note:"EB engaged and committed. Production licence in place. Expansion conversation being managed at exec level."},
+      D:{score:7,label:"Decision Criteria",note:"Criteria met at contract stage. Expansion SoW being reviewed — new scope to be agreed with Marvin, Tom, Seb."},
+      D2:{score:8,label:"Decision Process",note:"Clear process: SoW → review → test deploy → production rollout. DCP team aligned internally. No blockers flagged."},
+      I:{score:7,label:"Identify Pain",note:"Self-serve automation and data distribution at scale — Mastercard's production use case. Expanding to SoAR and CRB confirms growing internal adoption."},
+      C:{score:7,label:"Champion",note:"Jacob is the primary relationship. Internal champion confirmed and driving expansion. Exec engagement maintained by Tom/Marvin."}
+    }},
+
+  {name:"Royal London — POC",value:35000,stage:"POC",scored:true,health:53,
+    insight:"Graham delivered a 12-capability use case brief this week — the most substantive signal in weeks. Budget approved; governance sign-off is still the only blocker. Sales deck due EOD 18 Aug. Requirements Review and Graham sync both on 19 Aug. KPIs being drafted (target: 7-day access process → 3 days).",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Send sales deck to Graham by EOD 18 Aug — 4 journey buckets: Discovery, Trust, Access & Use, Governance","Requirements Review internal call 19 Aug 11am (Jacob, Thomas, Henriette, Grace, Joe)","Update Sync with Graham Morrow and Paul Jack 19 Aug 1pm — agree KPIs and pilot scope","Get Paul Jack's KDD design decision document into governance and secure a firm sign-off date","Lock the exec-to-exec meeting between the CDAIO and Marvin once governance clears","Re-agree quantified success metrics/ROI for the new pilot scope"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"meeting",date:"19 Aug",text:"Royal London Requirements Review — internal session with Jacob, Thomas, Henriette, Grace, Joe. Walk through pilot scope vs future state (~70% achievable in pilot)"},
+      {type:"meeting",date:"19 Aug",text:"Royal London/Harbr Update Sync — Graham Morrow and Paul Jack. Target: agree KPIs, confirm governance timeline"},
+      {type:"action",date:"18 Aug",text:"Sales deck due to Graham by EOD — four journey buckets, Gartner clipping, proof points, AI/external sharing roadmap"},
+      {type:"internal",date:"17 Aug",text:"Joe Ellis session: KPIs drafted (reduce 7-day access process to 3 days). Reviewed pilot scope — ~70% of Graham's 12 capabilities achievable in pilot"},
+      {type:"email",date:"13 Aug",text:"Graham sent detailed use case brief — 12 capability areas including Enterprise Asset Discovery, AI-powered search, self-service analytics, metadata & lineage, governance, access management, external sharing. Henriette acknowledged same day"},
+      {type:"email",date:"12 Aug",text:"Vivek chased Graham on use cases ahead of internal workshop. Graham on leave, confirmed would send thoughts same day"},
+      {type:"email",date:"11 Aug",text:"Henriette chased Graham on draft use cases — flagged internal workshop on 12 Aug as the trigger"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: Royal London reviewed. Next sync ~19 Aug confirmed"},
+      {type:"meeting",date:"12 Aug",text:"T2 Deal Review: Royal London discussed — requirements review and sales deck prep planned for w/c 18 Aug"},
+    ]}],
+    meddic:{
+      M:{score:4,label:"Metrics",note:"[17 Aug] KPIs being drafted — target to reduce data access time from 7 days to 3 days. Graham's 12-capability brief gives clear scope for pilot success criteria. Still no formal ROI quantified on Harbr's side."},
+      E:{score:6,label:"Economic Buyer",note:"Exec layer mapped — CDAIO, COO (deal tracked as COO-level objective), CEO in reporting chain. CDAIO wants to meet Marvin once governance clears. No direct Harbr engagement with EB yet."},
+      D:{score:4,label:"Decision Criteria",note:"[13 Aug] Graham's 12-capability brief now defines the PoV scope. Formal governance criteria still being defined via Paul Jack's KDD design decision document. FPE requirement still open."},
+      D2:{score:6,label:"Decision Process",note:"Sign-off chain: architects → networking → security → procurement. NDA and MSA/DPA exchanged; updated DPA outstanding. Governance timeline to be confirmed on 19 Aug call."},
+      I:{score:7,label:"Identify Pain",note:"Well-documented: fragmented data access across Databricks/Power BI, no single discovery layer, legacy infrastructure. Graham's brief confirms vision: single front door to enterprise data, analytics, and AI across RL."},
+      C:{score:6,label:"Champion",note:"Graham back and active — sent detailed use case brief this week. Henriette and Vivek maintaining weekly cadence. Watch: internal stakeholders pushing Graham to prove use-case builds, not just back Harbr."}
+    }},
+
+  // ── STAGE 3 — SCOPING ────────────────────────────────────────────────────
+  {name:"Johnson & Johnson",value:420000,stage:"Prospect",scored:true,health:52,
+    insight:"Strong people foundation (champion, EB, fit) but deal is at risk without a business case, close plan, or confirmed timeline. Nikhil looped Daniel in this week — positive signal. They want a real pilot with live data, not a mock POC. Respond to JD email today.",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Respond to JD email today — confirm interest in real pilot with live data, offer follow-up sessions","Establish target launch date and compelling event","Confirm whether competitors are actively involved","Quantify the business value and cost of inaction","Build a mutual close plan with agreed milestones and owners","Decide whether exec-to-exec engagement would accelerate decision making"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"action",date:"17 Aug",text:"Vivek to respond to JD email today — confirm interest in real pilot with live data, offer follow-up sessions"},
+      {type:"internal",date:"17 Aug",text:"Joe Ellis session: confirmed they want real pilot with live data, not mock POC. SOW deliverables being scoped: file/model assets in Spaces, release process, mandatory metadata"},
+      {type:"email",date:"14 Aug",text:"Nikhil looped Daniel into the thread — positive signal that momentum is building post-discovery"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: MR followed up with Nikhil/Jamie to advise next steps. Chasing Usman; likely waiting on Jamie's go-ahead before MSA red lines begin"},
+    ]}],
+    meddic:{
+      M:{score:2,label:"Metrics",note:"No ROI, cost savings, revenue impact or success metrics defined. Critical gap — quantify value urgently."},
+      E:{score:7,label:"Economic Buyer",note:"Executive decision maker identified. Still need to confirm budget ownership, final approval authority and their specific priorities."},
+      D:{score:5,label:"Decision Criteria",note:"Solution fit strong and engagement positive. Formal evaluation criteria, procurement and security requirements not yet mapped."},
+      D2:{score:5,label:"Decision Process",note:"Key stakeholders including project leads and enforcers identified. Full approval chain, legal/security review and contracting milestones unknown."},
+      I:{score:5,label:"Identify Pain",note:"Recognised need and active project sponsorship confirmed. Urgency, executive mandate and cost of inaction not yet validated."},
+      C:{score:7,label:"Champion",note:"Nikhil active — looped Daniel in this week. Must validate their influence, ability to drive consensus, and willingness to sell internally."}
+    }},
+
+  {name:"Visit Britain",value:25000,stage:"POC",scored:true,health:62,
+    insight:"Deal terms confirmed. Order form going out today. VB/Harbr Sync tomorrow with Mark Dodd and Satpal Chana. Keep the £25k POC track clean — do not conflate with expanded DSIT scope.",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Send order form today — £25k, 3 months, unlimited seats, Spaces, no integrations","VB/Harbr Sync 18 Aug 2pm with Mark Dodd and Satpal Chana — confirm order form receipt and timeline","Keep £25k POC track separate from DSIT expanded scope","Confirm MSA position — new MSA in progress, use current version for now"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"action",date:"17 Aug",text:"Order form being sent today — £25k, 3 months, unlimited seats, Spaces included, no integrations. Using updated B-Flexion version"},
+      {type:"meeting",date:"18 Aug",text:"VB/Harbr Sync — 2pm with Mark Dodd and Satpal Chana"},
+      {type:"internal",date:"17 Aug",text:"Joe Ellis session: deal terms confirmed and locked. DSIT scope expansion noted but kept separate from core £25k POC track"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: Visit Britain reviewed — order form to go this week"},
+    ]}],
+    meddic:{
+      M:{score:6,label:"Metrics",note:"POC scope defined: 3 months, platform validation. KPIs not yet formally agreed but order form locks the commercial frame. DSIT expansion could materially change deal size."},
+      E:{score:7,label:"Economic Buyer",note:"Mark Dodd engaged and driving. Satpal Chana also on calls. Budget confirmed at £25k for POC track."},
+      D:{score:6,label:"Decision Criteria",note:"POC terms locked: unlimited seats, Spaces, no integrations. Governance and procurement cleared at this value. DSIT scope above £25k may trigger retender risk."},
+      D2:{score:7,label:"Decision Process",note:"MSA in progress (using current version). Procurement cleared for £25k. Order form being sent today — clean path to signature."},
+      I:{score:7,label:"Identify Pain",note:"Government mandate driving the initiative. Clear urgency. Operational need to democratise data access confirmed across discovery calls."},
+      C:{score:6,label:"Champion",note:"Mark Dodd is the day-to-day champion. Satpal Chana involved. DSIT contact unnamed — all intel relayed via Mark. Watch: retender risk if DSIT scope pushes above £25k."}
+    }},
+
+  // ── STAGE 2 — QUALIFICATION ──────────────────────────────────────────────
+  {name:"Economist",value:120000,stage:"Prospect",scored:true,health:40,
+    insight:"Vivek met Ross — rebuilding their GTM and scoping how Harbr fits. Plan was to re-engage in a month (so ~mid-September). Granola notes flag the next conversation is to press for a decision — no new materials needed. Avishek Mullick, Chris Sadler, Arindam Dey, Gareth Izzard also mapped as stakeholders.",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Re-engage Ross Bailey ~mid-September — press for decision on next steps","No new materials needed — use existing deck for follow-up","Confirm which of the four stakeholders (Avishek, Chris, Arindam, Gareth) is the EB or procurement lead"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: VM met Ross Bailey. Economist rebuilding GTM — re-engage in a month (~mid-September). Plan: press for a decision, no new materials needed"},
+    ]}],
+    meddic:{
+      M:{score:4,label:"Metrics",note:"Use case is external data sharing — scoping how Harbr fits their GTM rebuild. No specific metrics or ROI established yet. Need to quantify the distribution opportunity in September conversation."},
+      E:{score:4,label:"Economic Buyer",note:"Ross Bailey is the contact. Multiple stakeholders mapped (Avishek Mullick, Chris Sadler, Arindam Dey, Gareth Izzard) but EB not confirmed. GTM rebuild context suggests exec-level sponsorship exists."},
+      D:{score:4,label:"Decision Criteria",note:"Early qualification stage — scoping fit against their GTM rebuild. No formal criteria established. September conversation needs to surface evaluation requirements."},
+      D2:{score:3,label:"Decision Process",note:"No process mapped. Waiting on their GTM rebuild to progress before procurement conversation starts. One-month hold is the current status."},
+      I:{score:5,label:"Identify Pain",note:"Data distribution and GTM infrastructure for a major media/data brand. Real need — The Economist's external data ambition is structurally aligned with Harbr's ICP."},
+      C:{score:4,label:"Champion",note:"Ross Bailey engaged but rebuilding internally. Not yet a champion in the active sense. Need September meeting to validate whether Ross will drive this or just evaluate it."}
+    }},
+
+  {name:"Argus Media",value:150000,stage:"Prospect",scored:true,health:35,
+    insight:"Going slow due to summer holidays. Jon Joslin responded this week asking to be chased again in September. Three follow-ups sent since June with no meeting booked. Marvin mailed the CCO directly to try to accelerate. Treat as September re-engage.",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Diarise September re-engage — Jon Joslin explicitly asked to be contacted then","Confirm whether Marvin's CCO outreach got a response","Prepare product update angle for September — API and new capabilities to lead with"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"email",date:"10 Aug",text:"Vivek chased Jon Joslin and Paul Rogers — follow-up on product update call. Third outreach since June"},
+      {type:"email",date:"10 Aug",text:"Jon Joslin replied: things slow due to holidays, reach out again in September. Effectively a soft hold."},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: Paul Rogers advised meet in September. Marvin mailed Argus CCO directly to try to accelerate"},
+    ]}],
+    meddic:{
+      M:{score:3,label:"Metrics",note:"Use case is improving data distribution and creating revenue opportunity. No specific metrics or ROI discussed — haven't progressed past initial discovery calls in June."},
+      E:{score:4,label:"Economic Buyer",note:"Jon Joslin and Paul Rogers are contacts. Marvin has mailed the CCO directly — if that lands, EB access would be strong. Not yet confirmed."},
+      D:{score:3,label:"Decision Criteria",note:"No formal criteria established. Early-stage — two discovery calls in June, then summer slowdown. Need a proper qualification conversation in September."},
+      D2:{score:2,label:"Decision Process",note:"No procurement process mapped. Summer holidays have stalled momentum. September is the realistic restart point."},
+      I:{score:5,label:"Identify Pain",note:"Improving data distribution and creating a revenue opportunity — real and strategic for a commodities data business like Argus. Pain is structurally strong (Q4 qualifier)."},
+      C:{score:3,label:"Champion",note:"Jon Joslin and Paul Rogers engaged but not active champions — they're responsive but not driving. Need to find someone internally who is motivated to move this forward in Q4."}
+    }},
+
+  {name:"Royal London — Production",value:90000,stage:"Prospect",scored:false,health:0,insight:"Production licence opportunity that follows the current POC/pilot. Next step is close of POC opportunity.",lastUpdated:null,owner:"Vivek",weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: Production licence opportunity tracked behind the current POC. Next step is close of POC/pilot opportunity — governance sign-off expected Oct/Nov"},
+      {type:"internal",date:"17 Aug",text:"Joe Ellis session: Production licence scoped at £90k ARR. Timeline contingent on governance clearance and successful pilot. All POC activity this week directly progresses this opportunity"},
+    ]}],
+    meddic:{M:{score:0,label:"Metrics",note:"Not scored yet"},E:{score:0,label:"Economic Buyer",note:"Not scored yet"},D:{score:0,label:"Decision Criteria",note:"Not scored yet"},D2:{score:0,label:"Decision Process",note:"Not scored yet"},I:{score:0,label:"Identify Pain",note:"Not scored yet"},C:{score:0,label:"Champion",note:"Not scored yet"}}},
+
+  {name:"B-Flexion — Production",value:100000,stage:"POC",scored:true,health:72,
+    insight:"POC won and onboarding underway. Production licence opportunity being scoped. Updated order form is now the standard template.",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Marvin to send welcome email to Abby","Jacob to align on exec engagement and peer relationships","Monitor onboarding milestones — CS handover complete","Begin scoping production licence conversation"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"internal",date:"17 Aug",text:"Updated B-Flexion order form confirmed as the new standard template — applied to Visit Britain order form this week"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: B-Flexion onboarding reviewed. Marvin to send welcome email to Abby. Jacob to align on exec engagement and peer relationships"},
+    ]}],
+    meddic:{
+      M:{score:7,label:"Metrics",note:"Success criteria defined at close: branded platform, 2 source systems, end-to-end data products, usage analytics. Business case approved internally."},
+      E:{score:8,label:"Economic Buyer",note:"EB engaged and signed. Deal closed. Exec engagement (Marvin → Abby) being established post-close."},
+      D:{score:7,label:"Decision Criteria",note:"Risk ledger scored 92%. Architecture review complete. DPA handled by compliance. MSA/order form agreed."},
+      D2:{score:8,label:"Decision Process",note:"Full approval chain cleared. July 1 pilot start confirmed. Onboarding underway."},
+      I:{score:6,label:"Identify Pain",note:"Ad-hoc data requests across FP&A, Ops/TPA, Treasury — no scalable access model. Multiple teams need data but no governance layer."},
+      C:{score:7,label:"Champion",note:"Timi Joseph — pragmatic champion. Drove internal sign-off. CS handover complete; Jacob now primary relationship."}
+    }},
+
+  // ── STAGE 1 — NEW 10% ───────────────────────────────────────────────────
+  {name:"London School of Economics",value:90000,stage:"Prospect",scored:true,health:38,
+    insight:"Active week on LSE — DB partnership alignment meeting held today (17 Aug) with Daniel Pickering and Hanna Oakes. OEM Universities deck reviewed internally with Marvin. Joint Harbr+Databricks framing being built for the LSE use case. Head of research meeting happened but they went quiet post that — this week's DB alignment is the re-engagement play.",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Follow up with Daniel Pickering and Hanna Oakes post today's call — send intro deck and TRE material (done 17 Aug)","Confirm joint Harbr+Databricks framing for LSE pitch","Get LSE meeting booked with DB and Harbr presenting jointly","Clarify Databricks OEM/co-sell commercial model for university sector"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"meeting",date:"17 Aug",text:"DB/Harbr — LSE use case call with Daniel Pickering (Databricks AE) and Hanna Oakes. Harbr+Databricks joint solution framing discussed for LSE research data use case"},
+      {type:"email",date:"17 Aug",text:"Vivek sent follow-up to Daniel Pickering and Hanna Oakes — Harbr intro deck and TRE material shared. Next: present jointly to LSE"},
+      {type:"internal",date:"12 Aug",text:"Walk through LSE Deck — internal session with Henriette to prep the universities deck"},
+      {type:"email",date:"12 Aug",text:"Vivek reached out to Daniel Pickering (DB AE) — introduced Harbr, referenced Marvin's prior relationship, proposed joint LSE and wider HE/research opportunity. Daniel replied same day, meeting booked for Monday 17 Aug"},
+      {type:"internal",date:"11 Aug",text:"Marvin reviewed Harbr OEM Sales Deck — Universities in Google Docs. Queried whether Databricks at-source positioning is accurate for LSE. Vivek flagged for review"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: LSE reviewed — DB AE Daniel Pickering connection confirmed, meeting being arranged"},
+    ]}],
+    meddic:{
+      M:{score:3,label:"Metrics",note:"No success metrics or ROI defined yet. Use case is research data sharing across LSE. Value tied to Databricks OEM play — joint commercial model not yet established."},
+      E:{score:3,label:"Economic Buyer",note:"Head of research engaged but went quiet post meeting. Economic buyer not confirmed — likely IT/data leadership or research computing lead. Need DB partnership to open the right door."},
+      D:{score:4,label:"Decision Criteria",note:"TRE (Trusted Research Environment) framing is the angle. Databricks+Harbr joint solution being positioned. Formal evaluation criteria not yet surfaced."},
+      D2:{score:3,label:"Decision Process",note:"No procurement process mapped. DB AE partnership is the route in — need to understand LSE's vendor engagement model for data infrastructure."},
+      I:{score:5,label:"Identify Pain",note:"Research data sharing and discoverability across LSE — real and recognised pain in the HE sector. TRE requirements add a governance/compliance angle that Harbr fits."},
+      C:{score:3,label:"Champion",note:"No confirmed internal champion yet. Daniel Pickering (DB AE) is the external ally. Head of research was engaged but silent — need to re-establish the contact."}
+    }},
+
+  {name:"Tamleek",value:200000,stage:"Prospect",scored:false,health:0,insight:"UAE Real Estate Platform. High motivation to engage — Cotality replication model. NDA to be signed, technical session to follow.",lastUpdated:null,owner:"Vivek",
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"action",date:"WC 10 Aug",text:"NDA to be signed. Technical session follow-up meeting scheduled WC 10 Aug"},
+    
+      {type:"internal",date:"10 Aug",text:"Tom/Vivek 1:1: Tamleek pipeline reviewed. NDA and technical session status discussed. ABM campaign running across accounts including Tamleek"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: Tamleek position held. NDA and technical session to be chased"},
+      {type:"action",date:"17 Aug",text:"Sparkle.io outbound TAM being built across 6 ICP segments — UAE real estate data sector included. TAM data being prepared for Sparkle"},]}],
+    meddic:{M:{score:0,label:"Metrics",note:"Not scored yet"},E:{score:0,label:"Economic Buyer",note:"Not scored yet"},D:{score:0,label:"Decision Criteria",note:"Not scored yet"},D2:{score:0,label:"Decision Process",note:"Not scored yet"},I:{score:0,label:"Identify Pain",note:"Not scored yet"},C:{score:0,label:"Champion",note:"Not scored yet"}}},
+
+  {name:"Copyright Licensing Agency",value:150000,stage:"Prospect",scored:true,health:32,
+    insight:"Demo is proving hard to land — Tim Cooper and Ritch Sibthorpe have declined or gone quiet on four separate slots this week. Demo environment is branded and ready (just needs logo). Joe is sending a screenshot of the branded mock-up to re-engage before he goes away Thursday. Watch: defensive tone from CLA side.",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Joe to send screenshot of branded CLA mock-up before Thursday to prompt re-engagement","Chase Ritch Sibthorpe for new demo date — offer maximum flexibility on slots","Get demo environment fully ready (add CLA logo — 5-second job)","Watch tone: Ritch described as defensive/unfriendly — adjust approach"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"action",date:"17 Aug",text:"Joe Ellis to send screenshot of branded CLA demo mock-up — use as re-engagement prompt before he goes away Thursday"},
+      {type:"email",date:"13 Aug",text:"Ritch Sibthorpe declined Monday 17 Aug slot — said Tim and he will revert with dates once coordinated internally. Vivek replied with maximum flexibility on timing"},
+      {type:"email",date:"13 Aug",text:"Tim Cooper declined Monday 17 Aug slot — requested Vivek share a batch of alternative slots. Vivek sent options: Tue 18, Wed 19, Thu 20, Mon 24, Tue 25"},
+      {type:"email",date:"11 Aug",text:"Vivek pushed back on Ritch's decline from 8 Aug — proposed moving demo to later in the day, asked Ritch to suggest what works"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: CLA demo environment noted as ready and branded. Plan to send screenshot to re-engage"},
+    ]}],
+    meddic:{
+      M:{score:2,label:"Metrics",note:"No metrics discussed yet — haven't reached demo stage. AI licensing distribution is the use case. No ROI or success criteria established."},
+      E:{score:3,label:"Economic Buyer",note:"Tim Cooper and Ritch Sibthorpe are the contacts. Not confirmed whether either is the EB — likely a product/commercial lead. Need to get past the diary friction to understand org structure."},
+      D:{score:3,label:"Decision Criteria",note:"AI Licensing platform — distribute and manage. No formal criteria surfaced. Demo is the next step to understand fit."},
+      D2:{score:2,label:"Decision Process",note:"No process mapped. Multiple demo declines suggest either low prioritisation or internal calendar/coordination issues. Ritch and Tim coordinating internally before reverting."},
+      I:{score:5,label:"Identify Pain",note:"AI licensing distribution is a real and growing need for rights management organisations. CLA's mandate to manage copyright at scale makes the use case structurally strong — if we can get in front of them."},
+      C:{score:2,label:"Champion",note:"No champion identified. Ritch Sibthorpe is the primary contact but tone is described as defensive. Tim Cooper co-engaged. Need someone internal pulling for the demo to happen."}
+    }},
+
+  // ── NURTURE ───────────────────────────────────────────────────────────────
+  {name:"Abu Dhabi Investment Council",value:150000,stage:"Prospect",scored:true,health:25,
+    insight:"Waiting on RFP — they will run a process when vendors are identified. Genie Preview outreach made. No activity this week. Watch D3 (UAE geography) and D2 (internal data management buyer, not a distributor).",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Monitor for RFP announcement — no proactive push until they signal readiness","Validate D2 disqualifier: is ADIC a data distributor/operator or an internal data consumer?","Validate D3: UAE is outside Harbr's active markets — assess whether to continue investing"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"internal",date:"13 Aug",text:"No activity this week. Waiting for ADIC to identify vendors and initiate RFP process"},
+    
+      {type:"internal",date:"10 Aug",text:"Tom/Vivek 1:1: ADIC pipeline reviewed. Waiting on RFP — Genie Preview outreach already made. ABM running across accounts"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: ADIC confirmed — will run RFP when vendors identified. No action until RFP published"},
+      {type:"action",date:"17 Aug",text:"Sparkle.io TAM being built — financial services data buyers including ADIC-type accounts in scope"},]}],
+    meddic:{
+      M:{score:2,label:"Metrics",note:"No metrics discussed. Internal data exchange use case — unclear whether this is outbound distribution (Harbr fit) or internal data management (not Harbr's product)."},
+      E:{score:2,label:"Economic Buyer",note:"No EB identified. RFP-led process means procurement will define the buyer when ready."},
+      D:{score:2,label:"Decision Criteria",note:"No criteria established — RFP not yet issued. Harbr will need to respond to their process rather than shape it."},
+      D2:{score:1,label:"Decision Process",note:"Waiting on RFP. No timeline given. Could be months away. Low control over process."},
+      I:{score:3,label:"Identify Pain",note:"Internal data exchange — unclear whether this aligns with Harbr's outbound distribution model. Risk of D2 disqualifier (buyer is inside the problem, not operating a platform)."},
+      C:{score:1,label:"Champion",note:"No champion. No relationship beyond initial outreach. RFP process removes champion-led deal dynamics."}
+    }},
+
+  {name:"CACI Ltd",value:250000,stage:"Prospect",scored:true,health:38,
+    insight:"Marketplace play — interest around discovery and subscription management. Tom Blacksell meeting Nigel (mid July). No email activity found this week — status unknown, follow-up needed.",
+    lastUpdated:"17/08/2026",owner:"Marvin",
+    priorities:["Chase Tom on outcome of Nigel meeting — what was discussed?","Understand whether CACI is a data distributor (Harbr ICP) or a data consumer","Map CACI's org structure — who is the EB for a marketplace decision?"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"internal",date:"13 Aug",text:"No activity found this week. TB meeting with Nigel was mid-July — outcome not captured in CRM or email"},
+    
+      {type:"internal",date:"10 Aug",text:"Tom/Vivek 1:1: CACI reviewed — Tom socialising with contacts. No imminent movement. Taken off active list pending TB update"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: CACI status confirmed — Tom back-channeling via Nigel"},
+      {type:"action",date:"17 Aug",text:"ABM running across ~15–16 accounts including CACI. LinkedIn generates accepts but low call conversion — Sparkle.io being evaluated as an alternative outbound motion"},]}],
+    meddic:{
+      M:{score:3,label:"Metrics",note:"Discovery and subscription management marketplace — no metrics established. Need to understand CACI's commercial model for data distribution."},
+      E:{score:3,label:"Economic Buyer",note:"Nigel is the contact via Tom. Not confirmed as EB. Marvin owns the relationship — org structure not yet mapped."},
+      D:{score:3,label:"Decision Criteria",note:"Marketplace use case — discovery and subscriptions. No formal criteria established. Early stage."},
+      D2:{score:2,label:"Decision Process",note:"No process mapped. Waiting on outcome of Tom's meeting with Nigel to understand next steps."},
+      I:{score:4,label:"Identify Pain",note:"Data marketplace and subscription management — if CACI is distributing data commercially, this is a strong ICP fit. Need to validate Q4 qualifier."},
+      C:{score:3,label:"Champion",note:"Nigel is the initial contact. Not yet a champion. Tom Blacksell is the Harbr-side relationship driver."}
+    }},
+
+  {name:"Department for Transport",value:120000,stage:"Prospect",scored:true,health:30,
+    insight:"NOI submitted. Registering on Dynamic Purchasing Framework. Government procurement — timeline will be driven by the framework process, not by Harbr. No activity this week.",
+    lastUpdated:"17/08/2026",owner:"Henriette",
+    priorities:["Confirm Dynamic Framework registration is complete and submitted","Monitor framework for procurement notice — no proactive push until tender issued","Validate C1 caution: regulatory/procurement timeline likely 2027 or later"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"internal",date:"13 Aug",text:"No activity this week. NOI submitted; awaiting Dynamic Framework registration process"},
+    
+      {type:"internal",date:"10 Aug",text:"Tom/Vivek 1:1: DfT reviewed — four ITTs expected potentially in August. Transport Data Marketplace, Data as an Asset, Data Standards Mapping, Accessibility Data. Matthew Coleman key contact for Projects 1 and 2"},
+      {type:"action",date:"10 Aug",text:"Dynamic Purchasing Framework registration in progress (Henriette) — must complete before formal ITT notice issued"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: DfT Lot 2 on hold — holding for formal notice after registration complete"},
+      {type:"action",date:"17 Aug",text:"GCA RM6347 Transport Tech Framework: Scheme 2 reopens Jan–Mar 2027. Register on Central Digital Platform, set ITT alerts. In-person event 21 Sep London — consider attending"},]}],
+    meddic:{
+      M:{score:2,label:"Metrics",note:"Transport Data Marketplace — government mandate. No metrics or success criteria established. Framework procurement will define requirements."},
+      E:{score:2,label:"Economic Buyer",note:"Government procurement — EB is the contracting authority. Not directly accessible until tender is issued via framework."},
+      D:{score:2,label:"Decision Criteria",note:"Will be defined by the framework tender documents when issued. No pre-engagement on criteria possible in government procurement context."},
+      D2:{score:2,label:"Decision Process",note:"Dynamic Purchasing Framework — formal government procurement process. Timeline driven by DfT, not Harbr. Could be 2027 or later (C1 caution applies)."},
+      I:{score:5,label:"Identify Pain",note:"Transport data marketplace — government data sharing mandate. Real and well-funded use case. CCE reference is relevant here."},
+      C:{score:2,label:"Champion",note:"No champion. Government procurement context means champion relationships are hard to develop before tender stage."}
+    }},
+
+  {name:"Verisk",value:250000,stage:"Prospect",scored:true,health:42,
+    insight:"NDA signed. Tom Blacksell meeting with CDO to discuss status. Tom back-channeling through his network. No email activity found this week — status dependent on Tom's CDO conversation.",
+    lastUpdated:"17/08/2026",owner:"Tom B",
+    priorities:["Tom: confirm outcome of CDO meeting — what did they say?","Clarify whether Verisk is building internal platform or open to buying","Check C2 caution: Verisk may be building their own solution"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"internal",date:"13 Aug",text:"Tom back-channeling. CDO meeting in progress. NDA signed — commercial conversation possible once CDO meeting outcome known"},
+    
+      {type:"internal",date:"10 Aug",text:"Tom/Vivek 1:1: Verisk reviewed — Tom meeting with CDO. NDA signed. Back-channeling via network"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: CDO meeting update awaited — Tom to report outcome this week"},]}],
+    meddic:{
+      M:{score:4,label:"Metrics",note:"Internal platform use case — insurance data distribution. No specific metrics established. NDA stage suggests real intent."},
+      E:{score:5,label:"Economic Buyer",note:"CDO is the EB target. Tom is meeting directly — strong access if the conversation goes well."},
+      D:{score:3,label:"Decision Criteria",note:"Internal platform build vs buy — C2 caution applies. Need to understand whether Verisk is evaluating Harbr as an accelerator of their build or a replacement."},
+      D2:{score:3,label:"Decision Process",note:"NDA signed. CDO meeting in progress. Next steps unclear until Tom's conversation outcome is known."},
+      I:{score:5,label:"Identify Pain",note:"Insurance data platform — internal and potentially external distribution. Large TAM if Verisk is the operator rather than just a consumer."},
+      C:{score:4,label:"Champion",note:"Tom Blacksell is the Harbr-side driver. No confirmed internal champion at Verisk yet — CDO meeting is the key to establishing this."}
+    }},
+
+  {name:"GBRX",value:150000,stage:"Prospect",scored:true,health:40,
+    insight:"Rail Data Marketplace — industry-wide exchange servicing all stakeholders. Waiting on ITT (Invitation to Tender). Government/public sector procurement rhythm. No activity this week.",
+    lastUpdated:"17/08/2026",owner:"Vivek",
+    priorities:["Monitor for ITT publication — no proactive push until tender issued","Validate Q4 qualifier: is the data sharing obligation structural (rail industry mandate) or discretionary?","Leverage CCE reference for government data marketplace credibility"],
+    weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+      {type:"internal",date:"13 Aug",text:"No activity this week. Waiting on ITT from GBRX. POC product noted in Planhat."},
+    
+      {type:"internal",date:"10 Aug",text:"Tom/Vivek 1:1: GBRX reviewed — formal process opens October. SME procurement questionnaire already submitted by Henriette"},
+      {type:"action",date:"10 Aug",text:"Tevver (Stuart Riddick) identified as strong upstream partner for GBRX. Vivek to send Stuart GBRX info and sign NDA — live action item"},
+      {type:"internal",date:"13 Aug",text:"Rev Call Week 27: GBRX status confirmed — waiting on ITT. Tevver partnership being pursued as route in"},
+      {type:"action",date:"17 Aug",text:"Send Stuart Riddick (Tevver) GBRX info and sign NDA — flagged as open action item"},]}],
+    meddic:{
+      M:{score:4,label:"Metrics",note:"Industry-wide rail data exchange — strong structural mandate. No specific metrics established. ITT will define requirements and success criteria."},
+      E:{score:3,label:"Economic Buyer",note:"Government/rail industry procurement — EB will be defined by the ITT process. No direct EB relationship established yet."},
+      D:{score:3,label:"Decision Criteria",note:"ITT will set criteria. Harbr's multi-party ecosystem model and CCE reference are the strongest fit signals. Need to engage before ITT is issued to shape requirements."},
+      D2:{score:3,label:"Decision Process",note:"Waiting on ITT — formal procurement process. Timeline unknown. Government procurement cadence means this could slip to 2027."},
+      I:{score:6,label:"Identify Pain",note:"Rail data distribution across an industry-wide ecosystem — structural mandate with multiple stakeholder types (operators, regulators, third parties). Strong Q4 qualifier."},
+      C:{score:2,label:"Champion",note:"No champion. Pre-ITT stage — need to find a relationship inside GBRX or the DfT who can inform the requirements before formal process begins."}
+    }},
+];
+
+function hColor(h){ return h>=70?'var(--accent)':h>=40?'var(--warn)':'var(--danger)'; }
+const STAGE_CLASS = {'Prod':'stage-prod','Year 1':'stage-year1','POC':'stage-poc','Prospect':'stage-prospect','Churn':'stage-churn'};
+
+function render(){
+  const sorted = [...DEALS].sort((a,b)=>{
+    if(a.scored && b.scored) return b.health - a.health;
+    if(a.scored) return -1; if(b.scored) return 1;
+    return b.value - a.value;
+  });
+  const scored = sorted.filter(d=>d.scored);
+  const totalArr = sorted.reduce((s,d)=>s+d.value,0);
+  const avg = scored.length ? Math.round(scored.reduce((s,d)=>s+d.health,0)/scored.length) : 0;
+  document.getElementById('s-total').textContent = sorted.length;
+  document.getElementById('s-arr').textContent = totalArr>=1e6?`£${(totalArr/1e6).toFixed(1)}M`:`£${(totalArr/1000).toFixed(0)}K`;
+  document.getElementById('s-health').textContent = scored.length ? avg+'%' : '—';
+  document.getElementById('s-risk').textContent = sorted.filter(d=>!d.scored||d.health<40).length;
+
+  const mk = ['M','E','D','D2','I','C'];
+  document.getElementById('deal-list').innerHTML = sorted.map((d,i)=>{
+    const hc = d.scored ? hColor(d.health) : 'var(--muted)';
+    const sc = STAGE_CLASS[d.stage]||'stage-prospect';
+    const mhtml = mk.map(k=>{
+      const it=d.meddic[k]; const s=it.score;
+      const c = !d.scored||s===0?'var(--muted)':s>=7?'var(--accent)':s>=4?'var(--warn)':'var(--danger)';
+      return `<div class="meddic-item">
+        <div class="meddic-letter" style="color:${c}">${k==='D2'?'D':k}</div>
+        <div class="meddic-name">${it.label}</div>
+        <div class="meddic-score-bar"><div class="meddic-score-fill" style="width:${s*10}%;background:${c}"></div></div>
+        <div class="meddic-score-num" style="color:${c}">${s}/10</div>
+        <div class="meddic-notes">${it.note}</div>
+      </div>`;
+    }).join('');
+
+    const prioritiesHTML = d.priorities ? `<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+      <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--accent2);margin-bottom:8px;">🎯 Priority Actions</div>
+      <div class="priority-list">${d.priorities.map((p,pi)=>`<div class="priority-item"><span class="priority-num">${pi+1}.</span><span style="color:var(--muted)">${p}</span></div>`).join('')}</div>
+    </div>` : '';
+
+    const TYPE_LABEL = {email:'EMAIL',call:'CALL',meeting:'MEETING',action:'ACTION',internal:'INTERNAL'};
+    const activityHTML = d.weeklyActivity ? d.weeklyActivity.map(w=>`
+      <div class="activity-week">
+        <div class="activity-week-label">📅 ${w.week}</div>
+        ${w.items.map(it=>`<div class="activity-item">
+          <span class="activity-type act-${it.type}">${TYPE_LABEL[it.type]||it.type.toUpperCase()}</span>
+          <span class="activity-text">${it.text}</span>
+          <span class="activity-date">${it.date}</span>
+        </div>`).join('')}
+      </div>`).join('') : `<div style="font-size:11px;color:var(--muted);padding:12px 0;">No activity logged yet for this deal.</div>`;
+
+    const hasActivity = !!(d.weeklyActivity && d.weeklyActivity.length);
+
+    return `<div class="deal-card" id="dc${i}" onclick="tog(${i})">
+      <div class="deal-card-header">
+        <div class="deal-rank">${String(i+1).padStart(2,'0')}</div>
+        <div>
+          <div class="deal-name">${d.name}${!d.scored?'<span class="unscored-badge">unscored</span>':''}</div>
+          <div class="deal-meta">${d.lastUpdated?'Updated '+d.lastUpdated:'Synced from Planhat'}</div>
+        </div>
+        <div class="arr-val"><span class="lbl2">ARR</span>${d.value>0?'£'+d.value.toLocaleString():'—'}</div>
+        <div><span class="deal-stage ${sc}">${d.stage}</span>${d.owner?`<div style="font-size:10px;color:var(--muted);margin-top:4px">${d.owner}</div>`:''}</div>
+        <div class="health-meter">
+          ${d.scored
+            ? `<div class="health-score" style="color:${hc}">${d.health}%</div><div class="health-bar"><div class="health-bar-fill" style="width:${d.health}%;background:${hc}"></div></div>`
+            : `<div style="font-size:11px;color:var(--muted)">—</div>`}
+        </div>
+      </div>
+      <div class="deal-expanded" onclick="event.stopPropagation()">
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab(${i},'overview',this)">Overview</button>
+          <button class="tab-btn" onclick="switchTab(${i},'meddic',this)">MEDDIC</button>
+          <button class="tab-btn" onclick="switchTab(${i},'activity',this)">Weekly Activity${hasActivity?' ●':''}</button>
+        </div>
+        <div id="tab-overview-${i}" class="tab-pane active">
+          <div style="margin-bottom:14px;">
+            <div class="insight-box">
+              <span class="insight-label">${d.scored?'⚡ Key Insight':'ℹ️ Not yet scored'}</span>
+              ${d.insight||'Tell Claude: "Score '+d.name+'" and paste your latest notes or transcript.'}
+            </div>
+            ${prioritiesHTML}
+          </div>
+        </div>
+        <div id="tab-meddic-${i}" class="tab-pane">
+          <div class="meddic-grid">${mhtml}</div>
+        </div>
+        <div id="tab-activity-${i}" class="tab-pane">
+          ${activityHTML}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function tog(i){ document.getElementById('dc'+i).classList.toggle('expanded'); }
+
+function switchTab(i, tab, btn){
+  ['overview','meddic','activity'].forEach(t=>{
+    const p = document.getElementById('tab-'+t+'-'+i);
+    if(p) p.classList.toggle('active', t===tab);
+  });
+  btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function exportCSV(){
+  const mk=['M','E','D','D2','I','C'];
+  const rows=[['Rank','Name','ARR','Stage','Health %',...mk,'Last Updated']];
+  [...DEALS].sort((a,b)=>{
+    if(a.scored&&b.scored) return b.health-a.health;
+    if(a.scored) return -1; if(b.scored) return 1;
+    return b.value-a.value;
+  }).forEach((d,i)=>rows.push([i+1,d.name,d.value,d.stage,d.scored?d.health:'',...mk.map(k=>d.meddic[k].score),d.lastUpdated||'']));
+  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='deal_health_meddic.csv'; a.click();
+}
+
+render();
+</script>
+</body>
+</html>
