@@ -82,6 +82,11 @@
   .priority-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
   .priority-item{display:flex;align-items:flex-start;gap:8px;font-size:11px;line-height:1.5;}
   .priority-num{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--accent);min-width:18px;}
+  /* health delta */
+  .health-delta{font-size:10px;font-weight:600;margin-top:3px;letter-spacing:.3px;font-family:'Syne',sans-serif;}
+  .health-delta.positive{color:var(--accent);}
+  .health-delta.negative{color:var(--danger);}
+  .health-delta.muted{color:var(--muted);font-weight:400;font-size:9px;}
   /* tabs */
   .tab-bar{display:flex;gap:4px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:0;}
   .tab-btn{font-family:'DM Mono',monospace;font-size:10px;padding:6px 14px;border:none;background:transparent;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;letter-spacing:.5px;text-transform:uppercase;}
@@ -139,7 +144,7 @@
 const DEALS = [
 
   // ── STAGE 4 — COMMITMENT ─────────────────────────────────────────────────
-  {name:"Mastercard",value:530000,stage:"Prod",scored:true,health:74,
+  {name:"Mastercard",value:530000,stage:"Prod",scored:true,health:74,previousHealth:null,
     insight:"Live account in production. SoW review underway — Marvin, Tom, and Seb reviewing. Test deploy to begin in next few weeks. DCP team aligned and beginning to move to SoAR and CRB. Jacob is the primary relationship owner.",
     lastUpdated:"17/08/2026",owner:"Jacob",
     priorities:["Complete SoW review with Marvin, Tom, Seb — confirm scope and timeline","Confirm test deploy date — begin next few weeks","Monitor DCP team transition to SoAR and CRB","Jacob: maintain exec relationship cadence"],
@@ -156,7 +161,7 @@ const DEALS = [
       C:{score:7,label:"Champion",note:"Jacob is the primary relationship. Internal champion confirmed and driving expansion. Exec engagement maintained by Tom/Marvin."}
     }},
 
-  {name:"Royal London — POC",value:35000,stage:"POC",scored:true,health:53,
+  {name:"Royal London — POC",value:35000,stage:"POC",scored:true,health:53,previousHealth:null,
     insight:"Graham delivered a 12-capability use case brief this week — the most substantive signal in weeks. Budget approved; governance sign-off is still the only blocker. Sales deck due EOD 18 Aug. Requirements Review and Graham sync both on 19 Aug. KPIs being drafted (target: 7-day access process → 3 days).",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Send sales deck to Graham by EOD 18 Aug — 4 journey buckets: Discovery, Trust, Access & Use, Governance","Requirements Review internal call 19 Aug 11am (Jacob, Thomas, Henriette, Grace, Joe)","Update Sync with Graham Morrow and Paul Jack 19 Aug 1pm — agree KPIs and pilot scope","Get Paul Jack's KDD design decision document into governance and secure a firm sign-off date","Lock the exec-to-exec meeting between the CDAIO and Marvin once governance clears","Re-agree quantified success metrics/ROI for the new pilot scope"],
@@ -181,7 +186,7 @@ const DEALS = [
     }},
 
   // ── STAGE 3 — SCOPING ────────────────────────────────────────────────────
-  {name:"Johnson & Johnson",value:420000,stage:"Prospect",scored:true,health:52,
+  {name:"Johnson & Johnson",value:420000,stage:"Prospect",scored:true,health:52,previousHealth:null,
     insight:"Strong people foundation (champion, EB, fit) but deal is at risk without a business case, close plan, or confirmed timeline. Nikhil looped Daniel in this week — positive signal. They want a real pilot with live data, not a mock POC. Respond to JD email today.",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Respond to JD email today — confirm interest in real pilot with live data, offer follow-up sessions","Establish target launch date and compelling event","Confirm whether competitors are actively involved","Quantify the business value and cost of inaction","Build a mutual close plan with agreed milestones and owners","Decide whether exec-to-exec engagement would accelerate decision making"],
@@ -200,7 +205,7 @@ const DEALS = [
       C:{score:7,label:"Champion",note:"Nikhil active — looped Daniel in this week. Must validate their influence, ability to drive consensus, and willingness to sell internally."}
     }},
 
-  {name:"Visit Britain",value:25000,stage:"POC",scored:true,health:62,
+  {name:"Visit Britain",value:25000,stage:"POC",scored:true,health:62,previousHealth:null,
     insight:"Deal terms confirmed. Order form going out today. VB/Harbr Sync tomorrow with Mark Dodd and Satpal Chana. Keep the £25k POC track clean — do not conflate with expanded DSIT scope.",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Send order form today — £25k, 3 months, unlimited seats, Spaces, no integrations","VB/Harbr Sync 18 Aug 2pm with Mark Dodd and Satpal Chana — confirm order form receipt and timeline","Keep £25k POC track separate from DSIT expanded scope","Confirm MSA position — new MSA in progress, use current version for now"],
@@ -220,7 +225,7 @@ const DEALS = [
     }},
 
   // ── STAGE 2 — QUALIFICATION ──────────────────────────────────────────────
-  {name:"Economist",value:120000,stage:"Prospect",scored:true,health:40,
+  {name:"Economist",value:120000,stage:"Prospect",scored:true,health:40,previousHealth:null,
     insight:"Vivek met Ross — rebuilding their GTM and scoping how Harbr fits. Plan was to re-engage in a month (so ~mid-September). Granola notes flag the next conversation is to press for a decision — no new materials needed. Avishek Mullick, Chris Sadler, Arindam Dey, Gareth Izzard also mapped as stakeholders.",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Re-engage Ross Bailey ~mid-September — press for decision on next steps","No new materials needed — use existing deck for follow-up","Confirm which of the four stakeholders (Avishek, Chris, Arindam, Gareth) is the EB or procurement lead"],
@@ -236,7 +241,7 @@ const DEALS = [
       C:{score:4,label:"Champion",note:"Ross Bailey engaged but rebuilding internally. Not yet a champion in the active sense. Need September meeting to validate whether Ross will drive this or just evaluate it."}
     }},
 
-  {name:"Argus Media",value:150000,stage:"Prospect",scored:true,health:35,
+  {name:"Argus Media",value:150000,stage:"Prospect",scored:true,health:35,previousHealth:null,
     insight:"Going slow due to summer holidays. Jon Joslin responded this week asking to be chased again in September. Three follow-ups sent since June with no meeting booked. Marvin mailed the CCO directly to try to accelerate. Treat as September re-engage.",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Diarise September re-engage — Jon Joslin explicitly asked to be contacted then","Confirm whether Marvin's CCO outreach got a response","Prepare product update angle for September — API and new capabilities to lead with"],
@@ -254,13 +259,13 @@ const DEALS = [
       C:{score:3,label:"Champion",note:"Jon Joslin and Paul Rogers engaged but not active champions — they're responsive but not driving. Need to find someone internally who is motivated to move this forward in Q4."}
     }},
 
-  {name:"Royal London — Production",value:90000,stage:"Prospect",scored:false,health:0,insight:"Production licence opportunity that follows the current POC/pilot. Next step is close of POC opportunity.",lastUpdated:null,owner:"Vivek",weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
+  {name:"Royal London — Production",value:90000,stage:"Prospect",scored:false,health:0,previousHealth:null,insight:"Production licence opportunity that follows the current POC/pilot. Next step is close of POC opportunity.",lastUpdated:null,owner:"Vivek",weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
       {type:"internal",date:"13 Aug",text:"Rev Call Week 27: Production licence opportunity tracked behind the current POC. Next step is close of POC/pilot opportunity — governance sign-off expected Oct/Nov"},
       {type:"internal",date:"17 Aug",text:"Joe Ellis session: Production licence scoped at £90k ARR. Timeline contingent on governance clearance and successful pilot. All POC activity this week directly progresses this opportunity"},
     ]}],
     meddic:{M:{score:0,label:"Metrics",note:"Not scored yet"},E:{score:0,label:"Economic Buyer",note:"Not scored yet"},D:{score:0,label:"Decision Criteria",note:"Not scored yet"},D2:{score:0,label:"Decision Process",note:"Not scored yet"},I:{score:0,label:"Identify Pain",note:"Not scored yet"},C:{score:0,label:"Champion",note:"Not scored yet"}}},
 
-  {name:"B-Flexion — Production",value:100000,stage:"POC",scored:true,health:72,
+  {name:"B-Flexion — Production",value:100000,stage:"POC",scored:true,health:72,previousHealth:null,
     insight:"POC won and onboarding underway. Production licence opportunity being scoped. Updated order form is now the standard template.",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Marvin to send welcome email to Abby","Jacob to align on exec engagement and peer relationships","Monitor onboarding milestones — CS handover complete","Begin scoping production licence conversation"],
@@ -278,7 +283,7 @@ const DEALS = [
     }},
 
   // ── STAGE 1 — NEW 10% ───────────────────────────────────────────────────
-  {name:"London School of Economics",value:90000,stage:"Prospect",scored:true,health:38,
+  {name:"London School of Economics",value:90000,stage:"Prospect",scored:true,health:38,previousHealth:null,
     insight:"Active week on LSE — DB partnership alignment meeting held today (17 Aug) with Daniel Pickering and Hanna Oakes. OEM Universities deck reviewed internally with Marvin. Joint Harbr+Databricks framing being built for the LSE use case. Head of research meeting happened but they went quiet post that — this week's DB alignment is the re-engagement play.",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Follow up with Daniel Pickering and Hanna Oakes post today's call — send intro deck and TRE material (done 17 Aug)","Confirm joint Harbr+Databricks framing for LSE pitch","Get LSE meeting booked with DB and Harbr presenting jointly","Clarify Databricks OEM/co-sell commercial model for university sector"],
@@ -299,7 +304,7 @@ const DEALS = [
       C:{score:3,label:"Champion",note:"No confirmed internal champion yet. Daniel Pickering (DB AE) is the external ally. Head of research was engaged but silent — need to re-establish the contact."}
     }},
 
-  {name:"Tamleek",value:200000,stage:"Prospect",scored:false,health:0,insight:"UAE Real Estate Platform. High motivation to engage — Cotality replication model. NDA to be signed, technical session to follow.",lastUpdated:null,owner:"Vivek",
+  {name:"Tamleek",value:200000,stage:"Prospect",scored:false,health:0,previousHealth:null,insight:"UAE Real Estate Platform. High motivation to engage — Cotality replication model. NDA to be signed, technical session to follow.",lastUpdated:null,owner:"Vivek",
     weeklyActivity:[{week:"w/c 11 Aug 2026",items:[
       {type:"action",date:"WC 10 Aug",text:"NDA to be signed. Technical session follow-up meeting scheduled WC 10 Aug"},
     
@@ -308,7 +313,7 @@ const DEALS = [
       {type:"action",date:"17 Aug",text:"Sparkle.io outbound TAM being built across 6 ICP segments — UAE real estate data sector included. TAM data being prepared for Sparkle"},]}],
     meddic:{M:{score:0,label:"Metrics",note:"Not scored yet"},E:{score:0,label:"Economic Buyer",note:"Not scored yet"},D:{score:0,label:"Decision Criteria",note:"Not scored yet"},D2:{score:0,label:"Decision Process",note:"Not scored yet"},I:{score:0,label:"Identify Pain",note:"Not scored yet"},C:{score:0,label:"Champion",note:"Not scored yet"}}},
 
-  {name:"Copyright Licensing Agency",value:150000,stage:"Prospect",scored:true,health:32,
+  {name:"Copyright Licensing Agency",value:150000,stage:"Prospect",scored:true,health:32,previousHealth:null,
     insight:"Demo is proving hard to land — Tim Cooper and Ritch Sibthorpe have declined or gone quiet on four separate slots this week. Demo environment is branded and ready (just needs logo). Joe is sending a screenshot of the branded mock-up to re-engage before he goes away Thursday. Watch: defensive tone from CLA side.",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Joe to send screenshot of branded CLA mock-up before Thursday to prompt re-engagement","Chase Ritch Sibthorpe for new demo date — offer maximum flexibility on slots","Get demo environment fully ready (add CLA logo — 5-second job)","Watch tone: Ritch described as defensive/unfriendly — adjust approach"],
@@ -329,7 +334,7 @@ const DEALS = [
     }},
 
   // ── NURTURE ───────────────────────────────────────────────────────────────
-  {name:"Abu Dhabi Investment Council",value:150000,stage:"Prospect",scored:true,health:25,
+  {name:"Abu Dhabi Investment Council",value:150000,stage:"Prospect",scored:true,health:25,previousHealth:null,
     insight:"Waiting on RFP — they will run a process when vendors are identified. Genie Preview outreach made. No activity this week. Watch D3 (UAE geography) and D2 (internal data management buyer, not a distributor).",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Monitor for RFP announcement — no proactive push until they signal readiness","Validate D2 disqualifier: is ADIC a data distributor/operator or an internal data consumer?","Validate D3: UAE is outside Harbr's active markets — assess whether to continue investing"],
@@ -348,7 +353,7 @@ const DEALS = [
       C:{score:1,label:"Champion",note:"No champion. No relationship beyond initial outreach. RFP process removes champion-led deal dynamics."}
     }},
 
-  {name:"CACI Ltd",value:250000,stage:"Prospect",scored:true,health:38,
+  {name:"CACI Ltd",value:250000,stage:"Prospect",scored:true,health:38,previousHealth:null,
     insight:"Marketplace play — interest around discovery and subscription management. Tom Blacksell meeting Nigel (mid July). No email activity found this week — status unknown, follow-up needed.",
     lastUpdated:"17/08/2026",owner:"Marvin",
     priorities:["Chase Tom on outcome of Nigel meeting — what was discussed?","Understand whether CACI is a data distributor (Harbr ICP) or a data consumer","Map CACI's org structure — who is the EB for a marketplace decision?"],
@@ -367,7 +372,7 @@ const DEALS = [
       C:{score:3,label:"Champion",note:"Nigel is the initial contact. Not yet a champion. Tom Blacksell is the Harbr-side relationship driver."}
     }},
 
-  {name:"Department for Transport",value:120000,stage:"Prospect",scored:true,health:30,
+  {name:"Department for Transport",value:120000,stage:"Prospect",scored:true,health:30,previousHealth:null,
     insight:"NOI submitted. Registering on Dynamic Purchasing Framework. Government procurement — timeline will be driven by the framework process, not by Harbr. No activity this week.",
     lastUpdated:"17/08/2026",owner:"Henriette",
     priorities:["Confirm Dynamic Framework registration is complete and submitted","Monitor framework for procurement notice — no proactive push until tender issued","Validate C1 caution: regulatory/procurement timeline likely 2027 or later"],
@@ -387,7 +392,7 @@ const DEALS = [
       C:{score:2,label:"Champion",note:"No champion. Government procurement context means champion relationships are hard to develop before tender stage."}
     }},
 
-  {name:"Verisk",value:250000,stage:"Prospect",scored:true,health:42,
+  {name:"Verisk",value:250000,stage:"Prospect",scored:true,health:42,previousHealth:null,
     insight:"NDA signed. Tom Blacksell meeting with CDO to discuss status. Tom back-channeling through his network. No email activity found this week — status dependent on Tom's CDO conversation.",
     lastUpdated:"17/08/2026",owner:"Tom B",
     priorities:["Tom: confirm outcome of CDO meeting — what did they say?","Clarify whether Verisk is building internal platform or open to buying","Check C2 caution: Verisk may be building their own solution"],
@@ -405,7 +410,7 @@ const DEALS = [
       C:{score:4,label:"Champion",note:"Tom Blacksell is the Harbr-side driver. No confirmed internal champion at Verisk yet — CDO meeting is the key to establishing this."}
     }},
 
-  {name:"GBRX",value:150000,stage:"Prospect",scored:true,health:40,
+  {name:"GBRX",value:150000,stage:"Prospect",scored:true,health:40,previousHealth:null,
     insight:"Rail Data Marketplace — industry-wide exchange servicing all stakeholders. Waiting on ITT (Invitation to Tender). Government/public sector procurement rhythm. No activity this week.",
     lastUpdated:"17/08/2026",owner:"Vivek",
     priorities:["Monitor for ITT publication — no proactive push until tender issued","Validate Q4 qualifier: is the data sharing obligation structural (rail industry mandate) or discretionary?","Leverage CCE reference for government data marketplace credibility"],
@@ -488,7 +493,16 @@ function render(){
         <div><span class="deal-stage ${sc}">${d.stage}</span>${d.owner?`<div style="font-size:10px;color:var(--muted);margin-top:4px">${d.owner}</div>`:''}</div>
         <div class="health-meter">
           ${d.scored
-            ? `<div class="health-score" style="color:${hc}">${d.health}%</div><div class="health-bar"><div class="health-bar-fill" style="width:${d.health}%;background:${hc}"></div></div>`
+            ? `<div class="health-score" style="color:${hc}">${d.health}%</div>
+               <div class="health-bar"><div class="health-bar-fill" style="width:${d.health}%;background:${hc}"></div></div>
+               ${(()=>{
+                 if(d.previousHealth===null||d.previousHealth===undefined) return '<div class="health-delta muted">— first score</div>';
+                 const diff = d.health - d.previousHealth;
+                 if(diff===0) return '<div class="health-delta muted">→ no change</div>';
+                 const arrow = diff>0?'↑':'↓';
+                 const cls = diff>0?'positive':'negative';
+                 return \`<div class="health-delta \${cls}">\${arrow} \${diff>0?'+':''}\${diff}%</div>\`;
+               })()}`
             : `<div style="font-size:11px;color:var(--muted)">—</div>`}
         </div>
       </div>
