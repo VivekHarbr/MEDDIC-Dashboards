@@ -1,0 +1,134 @@
+{
+  "lastUpdated": "2026-08-17",
+  "week": "w/c 17 Aug 2026",
+  "deals": [
+    {
+      "name": "Mastercard",
+      "health": 74,
+      "previousHealth": null,
+      "stage": "Prod",
+      "owner": "Jacob",
+      "arr": 530000
+    },
+    {
+      "name": "Royal London \u2014 POC",
+      "health": 53,
+      "previousHealth": null,
+      "stage": "POC",
+      "owner": "Vivek",
+      "arr": 35000
+    },
+    {
+      "name": "Johnson & Johnson",
+      "health": 52,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Vivek",
+      "arr": 420000
+    },
+    {
+      "name": "Visit Britain",
+      "health": 62,
+      "previousHealth": null,
+      "stage": "POC",
+      "owner": "Vivek",
+      "arr": 25000
+    },
+    {
+      "name": "Economist",
+      "health": 40,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Vivek",
+      "arr": 120000
+    },
+    {
+      "name": "Argus Media",
+      "health": 35,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Vivek",
+      "arr": 150000
+    },
+    {
+      "name": "Royal London \u2014 Production",
+      "health": 0,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Vivek",
+      "arr": 90000
+    },
+    {
+      "name": "B-Flexion \u2014 Production",
+      "health": 72,
+      "previousHealth": null,
+      "stage": "POC",
+      "owner": "Vivek",
+      "arr": 100000
+    },
+    {
+      "name": "London School of Economics",
+      "health": 38,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Vivek",
+      "arr": 90000
+    },
+    {
+      "name": "Tamleek",
+      "health": 35,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Vivek",
+      "arr": 200000
+    },
+    {
+      "name": "Copyright Licensing Agency",
+      "health": 32,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Vivek",
+      "arr": 150000
+    },
+    {
+      "name": "Abu Dhabi Investment Council",
+      "health": 25,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Vivek",
+      "arr": 150000
+    },
+    {
+      "name": "CACI Ltd",
+      "health": 38,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Marvin",
+      "arr": 250000
+    },
+    {
+      "name": "Department for Transport",
+      "health": 30,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Henriette",
+      "arr": 120000
+    },
+    {
+      "name": "Verisk",
+      "health": 42,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Tom B",
+      "arr": 250000
+    },
+    {
+      "name": "GBRX",
+      "health": 40,
+      "previousHealth": null,
+      "stage": "Prospect",
+      "owner": "Vivek",
+      "arr": 150000
+    }
+  ]
+}
