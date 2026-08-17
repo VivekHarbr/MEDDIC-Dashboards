@@ -557,7 +557,34 @@ function exportCSV(){
   a.download='deal_health_meddic.csv'; a.click();
 }
 
-render();
+// Fetch live scores from scores.json and merge into DEALS before rendering
+async function loadAndRender() {
+  try {
+    const res = await fetch('scores.json?v=' + Date.now());
+    if (res.ok) {
+      const json = await res.json();
+      // Update header badge with week
+      const badge = document.querySelector('.planhat-badge');
+      if (badge) badge.innerHTML = '&#11041; ' + (json.week || 'Pipeline') + ' &middot; Planhat';
+      // Merge scores into DEALS by name
+      const scoreMap = {};
+      (json.deals || []).forEach(d => { scoreMap[d.name] = d; });
+      DEALS.forEach(deal => {
+        const s = scoreMap[deal.name];
+        if (s) {
+          if (s.health > 0) { deal.health = s.health; deal.scored = true; }
+          deal.previousHealth = s.previousHealth;
+          deal.lastUpdated = json.lastUpdated || deal.lastUpdated;
+        }
+      });
+    }
+  } catch(e) {
+    console.warn('Could not load scores.json, using embedded data', e);
+  }
+  render();
+}
+
+loadAndRender();
 </script>
 </body>
 </html>
